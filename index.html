@@ -1,0 +1,393 @@
+<html>
+	<head>
+		<title id="hello">Hello World</title>
+		<!-- Include the full library -->
+		<script type="text/javascript" src="https://sdk-cdn.mypurecloud.com/javascript/12.0.0/purecloud-platform-client-v2.min.js"></script>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
+	</head>
+
+	<body>
+		<h1 onclick="auth(myClick())">LIST</h1>
+
+		<div id="my-name"></div>
+		<div class="my-id"></div>
+		<table id="my-table"></table>
+		<table id="my-table1"></table>
+
+		<script>
+		//document.getElementById("hello").onclick(myClick());
+
+		// adds an element to the array if it does not already exist using a comparer 
+		// function
+		function pushUnlessExist(array,item){
+			for(var i = 0; i < array.length; i++){
+				if(array[i][0]==item[0]){array[i][1]+=item[1];return;}
+			}
+			array.push(item);
+		}
+
+		//var list=[];
+		function MyFun(list,data){
+			for(var i = 0; i < data.length; i++){
+				var participants=data[i].participants;
+				for(var j = 0; j < participants.length; j++){
+					var theOne = participants[j];
+					var theName = theOne.participantName;
+					if(theName=="undefined"){theName="Anonymous";}
+					var theItem = [theOne.participantName, 0];
+					var segments = theOne.sessions[0].segments;
+					for(var k = 0; k < segments.length; k++){
+						if(segments[k].segmentType=="interact"){
+							var start = segments[k].segmentStart;
+							var end = segments[k].segmentEnd;
+							var time = (Date.parse(end) - Date.parse(start))/1000;
+							theItem[1]+=time;
+							if(time > 0){pushUnlessExist(list,theItem);}
+						}
+					}
+				}
+			}
+		}
+				
+
+
+		function addRow(tableID, content) {
+
+			var table = document.getElementById(tableID);
+
+			var rowCount = table.rows.length;
+			var row = table.insertRow(rowCount);
+
+			row.addEventListener('click', function(e){
+				addRow('my-table1',["Customer Name","Call Time"])
+				document.getElementById("my-table").remove();
+				var apiInstance = new platformClient.UsersApi();
+			    var analyticsApiInstance = new platformClient.AnalyticsApi();
+
+				var opts = { 
+				  'expand': ["expand_example"] // [String] | Which fields, if any, to expand.
+				};
+				apiInstance.getUsersMe(opts)
+			  	.then(function(data) {
+			    	// console.log(`getUsersMe success! data: ${JSON.stringify(data, null, 2)}`);
+			    	// console.log(data.name);
+			    	//targetId = data.id;
+			    	//document.querySelector('.my-id').innerHTML = data.id;
+			    	//document.querySelector('#my-name').innerHTML = data.name;
+
+			    	var a = content[1];
+	    		var queryBody = {
+					 "interval": "2017-11-11T05:00:00.000Z/2017-11-12T05:00:00.000Z",
+					 "order": "asc",
+					 "orderBy": "conversationStart",
+					 "paging": {
+					  "pageSize": 25,
+					  "pageNumber": 1
+					 },
+					 "segmentFilters": [
+					  {
+					   "type": "or",
+					   "predicates": [
+					    {
+					     "type": "dimension",
+					     "dimension": "userId",
+					     "operator": "matches",
+					     //"value": a
+					     "value": "d74ade45-a3b5-483b-98b1-140fd3ab339c"
+					    }
+					   ]
+					  }
+					 ]
+					};
+
+		    	return analyticsApiInstance.postAnalyticsConversationsDetailsQuery(queryBody);
+			  })
+			  	.then(function(data) {
+			  		console.log(data);
+			  		var list=[];
+			  		MyFun(list,data.conversations);
+			  		console.log(list);
+			  		for(var i = 0; i < list.length; i++){addRow('my-table1', list[i]);}
+			  			addRow('my-table1',["From","To"])
+			  			addRow('my-table1',["2017-11-11T05:00:00.000Z","2017-11-12T05:00:00.000Z"]);
+			  	})
+			  .catch(function(error) {
+			  	console.log('There was a failure calling getUsersMe');
+			    console.error(error);
+			  });
+			});
+
+
+			var cell0 = row.insertCell(0);
+			cell0.innerHTML = content[0];
+			//cell0.onclick("function name")
+
+			var cell1 = row.insertCell(1);
+			cell1.innerHTML = content[1];
+
+
+			/*var cell2 = row.insertCell(1);
+			cell2.innerHTML = rowCount + 1;
+
+			var cell3 = row.insertCell(2);
+			var element2 = document.createElement("input");
+			element2.type = "text";
+			element2.name = "txtbox[]";
+			cell3.appendChild(element2);*/
+		}
+
+
+		function auth(anotherFn){
+			const platformClient = require('platformClient');
+			var client = platformClient.ApiClient.instance;
+			client.loginImplicitGrant('818d5b12-293c-4f81-af4a-1262f62bd4d3', 'https://localhost:3000/')
+		  		.then(function(){
+		  			anotherFn;
+			});
+		}
+
+		function myClick(theId){
+				//document.getElementById("my-table").remove();
+		  		var apiInstance = new platformClient.UsersApi();
+			    var analyticsApiInstance = new platformClient.AnalyticsApi();
+
+				var opts = { 
+				  'expand': ["expand_example"] // [String] | Which fields, if any, to expand.
+				};
+				apiInstance.getUsersMe(opts)
+			  	.then(function(data) {
+			    	// console.log(`getUsersMe success! data: ${JSON.stringify(data, null, 2)}`);
+			    	// console.log(data.name);
+			    	//targetId = data.id;
+			    	//document.querySelector('.my-id').innerHTML = data.id;
+			    	//document.querySelector('#my-name').innerHTML = data.name;
+
+
+	    		var queryBody = {
+					 "interval": "2017-11-11T05:00:00.000Z/2017-11-12T05:00:00.000Z",
+					 "order": "asc",
+					 "orderBy": "conversationStart",
+					 "paging": {
+					  "pageSize": 25,
+					  "pageNumber": 1
+					 },
+					 "segmentFilters": [
+					  {
+					   "type": "or",
+					   "predicates": [
+					    {
+					     "type": "dimension",
+					     "dimension": "userId",
+					     "operator": "matches",
+					     "value": "d74ade45-a3b5-483b-98b1-140fd3ab339c"
+					    }
+					   ]
+					  }
+					 ]
+					};
+
+		    	return analyticsApiInstance.postAnalyticsConversationsDetailsQuery(queryBody);
+			  })
+			  	.then(function(data) {
+			  		console.log(data);
+			  		var list=[];
+			  		MyFun(list,data.conversations);
+			  		console.log(list);
+			  		for(var i = 0; i < list.length; i++){addRow('my-table1', list[i]);}
+			  	})
+			  .catch(function(error) {
+			  	console.log('There was a failure calling getUsersMe');
+			    console.error(error);
+			  });
+		}
+
+
+
+
+		const platformClient = require('platformClient');
+		var client = platformClient.ApiClient.instance;
+		client.loginImplicitGrant('818d5b12-293c-4f81-af4a-1262f62bd4d3', 'https://localhost:3000/')
+		  .then(function() {
+		    // Browser
+			const platformClient = require('platformClient');
+			// Configure OAuth2 access token for authorization: PureCloud Auth
+			//platformClient.ApiClient.instance.authentications['PureCloud Auth'].accessToken = 'YOUR ACCESS TOKEN';
+
+			/*var apiInstance = new platformClient.UsersApi();
+
+			var userId = "c5c781a7-3e36-44c2-abec-bf0144178496"; // String | User ID
+
+			var opts = { 
+		  	'expand': ["expand_example"] // [String] | Which fields, if any, to expand
+			};
+			apiInstance.getUserSuperiors(userId, opts)
+		  	.then(function(data) {
+		    	console.log(`getUserSuperiors success! data: ${JSON.stringify(data, null, 2)}`);
+		  	})
+		  	.catch(function(error) {
+		  		console.log('There was a failure calling getUserSuperiors');
+		    console.error(error);*/
+		  	//});
+
+		  	/*function myClick(){
+		  		var apiInstance = new platformClient.UsersApi();
+			    var analyticsApiInstance = new platformClient.AnalyticsApi();
+
+				var opts = { 
+				  'expand': ["expand_example"] // [String] | Which fields, if any, to expand.
+				};
+				apiInstance.getUsersMe(opts)
+			  	.then(function(data) {
+			    	// console.log(`getUsersMe success! data: ${JSON.stringify(data, null, 2)}`);
+			    	// console.log(data.name);
+			    	//targetId = data.id;
+			    	//document.querySelector('.my-id').innerHTML = data.id;
+			    	//document.querySelector('#my-name').innerHTML = data.name;
+
+
+	    		var queryBody = {
+					 "interval": "2017-11-11T05:00:00.000Z/2017-11-12T05:00:00.000Z",
+					 "order": "asc",
+					 "orderBy": "conversationStart",
+					 "paging": {
+					  "pageSize": 25,
+					  "pageNumber": 1
+					 },
+					 "segmentFilters": [
+					  {
+					   "type": "or",
+					   "predicates": [
+					    {
+					     "type": "dimension",
+					     "dimension": "userId",
+					     "operator": "matches",
+					     "value": "d74ade45-a3b5-483b-98b1-140fd3ab339c"
+					    }
+					   ]
+					  }
+					 ]
+					};
+
+		    	return analyticsApiInstance.postAnalyticsConversationsDetailsQuery(queryBody);
+			  })
+			  	.then(function(data) {
+			  		console.log(data);
+			  		var list=[];
+			  		MyFun(list,data.conversations);
+			  		console.log(list);
+			  		for(var i = 0; i < list.length; i++){addRow('my-table', list[i]);}
+			  	})
+			  .catch(function(error) {
+			  	console.log('There was a failure calling getUsersMe');
+			    console.error(error);
+			  });
+			}*/
+/*
+			    var apiInstance = new platformClient.UsersApi();
+			    var analyticsApiInstance = new platformClient.AnalyticsApi();
+
+				var opts = { 
+				  'expand': ["expand_example"] // [String] | Which fields, if any, to expand.
+				};
+				apiInstance.getUsersMe(opts)
+			  	.then(function(data) {
+		    		var queryBody = {
+						 "interval": "2017-11-11T05:00:00.000Z/2017-11-12T05:00:00.000Z",
+						 "order": "asc",
+						 "orderBy": "conversationStart",
+						 "paging": {
+						  "pageSize": 25,
+						  "pageNumber": 1
+						 },
+						 "segmentFilters": [
+						  {
+						   "type": "or",
+						   "predicates": [
+						    {
+						     "type": "dimension",
+						     "dimension": "userId",
+						     "operator": "matches",
+						     "value": "d74ade45-a3b5-483b-98b1-140fd3ab339c"
+						    }
+						   ]
+						  }
+						 ]
+						};
+
+			    	return analyticsApiInstance.postAnalyticsConversationsDetailsQuery(queryBody);
+				  })
+				  	.then(function(data) {
+				  		console.log(data);
+				  		var list=[];
+				  		MyFun(list,data.conversations);
+				  		console.log(list);
+				  		for(var i = 0; i < list.length; i++){addRow('my-table', list[i]);}
+				  	})
+				  .catch(function(error) {
+				  	console.log('There was a failure calling getUsersMe');
+				    console.error(error);
+				  });*/
+
+
+
+			var conversationApiInstance = new platformClient.ConversationsApi();
+
+			var opts = { 
+			  'communicationType': "Call" // String | Call or Chat communication filtering
+			};
+			conversationApiInstance.getConversations(opts)
+			  .then(function(data) {
+			    console.log(`getConversations success! data: ${JSON.stringify(data, null, 2)}`);
+
+			  })
+			  .catch(function(error) {
+			  	console.log('There was a failure calling getConversations');
+			    console.error(error);
+			  });
+
+
+			  })
+
+
+
+		var apiInstance2 = new platformClient.UsersApi();
+
+		var opts = { 
+		  'pageSize': 100, // Number | Page size
+		  'pageNumber': 1, // Number | Page number
+		  'sortOrder': "ASC", // String | Ascending or descending sort order
+		  //'expand': ["expand_example"], // [String] | Which fields, if any, to expand
+		  'state': "active" // String | Only list users of this state
+		};
+		apiInstance2.getUsers(opts)
+		  .then(function(data) {
+		    //console.log(`Conversation getUsers success! data: ${JSON.stringify(data, null, 2)}`);
+		    var i = 0;
+		    while(data.entities[i]){
+		    	var theName = [data.entities[i].name, data.entities[i].id];
+		    	//console.log('Got the user', theName);
+		    	addRow('my-table', theName);
+		    	i++;
+		    }
+		    //console.log('Got the first user', data.entities[0]);
+		  })
+		  .catch(function(error) {
+		  	console.log('There was a failure calling getUsers');
+		    console.error(error);
+		  });
+
+		/*	  .catch(function(response) {
+			    console.log(`${response.status} - ${response.error.message}`);
+			    console.log(response.error);
+			  }));
+		*/
+
+		  </script>
+	</body>
+</html>
+
+
+
+
+
+
